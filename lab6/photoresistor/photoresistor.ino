@@ -3,8 +3,8 @@
 
 
 #define PHOTO_PIN 35
-#define WIFI_SSID "streaks"
-#define WIFI_PASSWORD "helloyesno"
+#define WIFI_SSID "yale wireless"
+#define WIFI_PASSWORD ""
 
 WiFiUDP Udp;
 
