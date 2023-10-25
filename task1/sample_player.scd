@@ -6,7 +6,7 @@
 
 var amenBuffer, amenSynth, amenOsc;
 
-amenBuffer = Buffer.read(s, thisProcess.nowExecutingPath.dirname +/+ "amen.wav");
+amenBuffer = Buffer.read(s, thisProcess.nowExecutingPath.dirname +/+ "amen.wav"); // 175 BPM
 
 
 SynthDef(\amen, {| out = 0, srate = 1, filterfreq = 500 |
