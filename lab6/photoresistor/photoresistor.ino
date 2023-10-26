@@ -3,8 +3,8 @@
 
 
 #define PHOTO_PIN 35
-#define WIFI_SSID "Yale wireless"  # TODO: replace with yale wireless!!
-#define WIFI_PASSWORD ""
+#define WIFI_SSID "streaks"  // TODO: replace with yale wireless!!
+#define WIFI_PASSWORD "helloyesno"
 
 WiFiUDP Udp;
 
@@ -27,11 +27,11 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  Udp.beginPacket("192.168.0.233", 6100);
+  int beginPkt = Udp.beginPacket("192.168.150.51", 6100);
   Serial.println(String("begin packet: ") + beginPkt);
   String msg = String(analogRead(PHOTO_PIN));
   Udp.printf(msg.c_str());
-  Udp.endPacket();
+  int pkt = Udp.endPacket();
 
   Serial.println(String("sent packet: ") + pkt);
   // delay(500);
