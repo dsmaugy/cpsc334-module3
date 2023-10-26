@@ -17,5 +17,5 @@ while True:
         if amen_filter <= 200:
             increase = True
 
-    osc_client.send_message("/amen_synth", [0.8, amen_filter])
+    osc_client.send_message("/amen_synth", [0.8, 5000])
     sleep(0.01)
