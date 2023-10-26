@@ -2,7 +2,7 @@
 #include <ArduinoOSCWiFi.h>
 
 #define WIFI_SSID "The Penthouse"
-#define WIFI_PASSWORD "bingusbongus!"
+#define WIFI_PASSWORD ""
 #define SC_IP "192.168.0.233"
 #define SC_PORT 57120 // default supercollider port
 

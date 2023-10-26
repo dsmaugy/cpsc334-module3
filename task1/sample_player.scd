@@ -26,6 +26,20 @@ amenOsc = OSCFunc({ |msg, time, addr, recvPort|
 )
 
 (
+var yeahBuffer, yeahSynth, yeahOsc;
+
+yeahBuffer = Buffer.read(s, thisProcess.nowExecutingPath.dirname +/+ "samples/yeah.wav");
+
+SynthDef(\yeah, {| out = 0|
+    Out.ar(out,
+		PlayBuf.ar(2, yeahBuffer, 1))
+}).add();
+
+yeahSynth = Synth(\yeah);
+
+)
+
+(
 var vistaBuffer, vistaOsc, vistaSynth;
 
 vistaBuffer = Buffer.readChannel(s, thisProcess.nowExecutingPath.dirname +/+ "samples/vista.wav", channels: 0);
@@ -39,7 +53,7 @@ SynthDef(\vista, {| out = 0, gate = 1, srate = 1, amp = 1, filterfreq = 500 |
         levelScale: amp, doneAction: 0);
 	Out.ar(out,
 		BPF.ar(GrainBuf.ar(1, Impulse.kr(10), rate: srate, dur: 1, pos: 0.4, sndbuf: vistaBuffer, pos: LFNoise2.kr(0.1).range(0, 0.5)
-		) * env, filterfreq
+		) * env, 500
 
 		)
 	)
