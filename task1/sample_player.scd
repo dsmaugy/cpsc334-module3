@@ -2,28 +2,57 @@
 
 var amenBuffer, amenSynth, amenOsc;
 
-amenBuffer = Buffer.read(s, thisProcess.nowExecutingPath.dirname +/+ "samples/amen.wav"); // 175 BPM
+~currentDir = thisProcess.nowExecutingPath.dirname;
+~recordBuffer = Buffer.alloc(s, s.sampleRate * 10, 2);
+b = Buffer.read(s, ~currentDir +/+ "samples/amen.wav"); // 175 BPM
 
 
-SynthDef(\amen, {| out = 0, srate = 1, filterfreq = 500 |
-    Out.ar(out,
-		BPF.ar(PlayBuf.ar(2, amenBuffer, srate, loop: 1), filterfreq)
-    )
+SynthDef(\amen, {| out = 0, srate = 1, filterfreq = 500, startPos = 0 |
+	var audioOut;
+	audioOut = BPF.ar(
+			PlayBuf.ar(
+				2, b, srate, startPos: startPos, loop: 1),
+			filterfreq);
+
+    RecordBuf.ar(audioOut,
+		~recordBuffer
+    );
+
+	Out.ar(0, audioOut);
 }).add();
 
 
-
-
-// s.sync; // wait for synthdefs to be added
-amenSynth = Synth(\amen);
-
-amenOsc = OSCFunc({ |msg, time, addr, recvPort|
+OSCFunc({ |msg, time, addr, recvPort|
 	// srate, filter
-
-	amenSynth.set(\srate, msg[1], \filterfreq, msg[2]);
-	msg.postln;
+	~amenSynth.set(\srate, msg[1], \filterfreq, msg[2]);
 }, '/amen_synth');
+
+
+ OSCFunc({ |msg, time, addr, recvPort|
+ 	// srate, filter
+	"started".postln;
+	~amenSynth = Synth(\amen, [\startPos, ~amenBuffer.numFrames.rand]);
+ }, '/start_record');
+
+
+
+OSCFunc({ |msg, time, addr, recvPort|
+	// srate, filter
+	~amenSynth.free;
+	~recordBuffer.write("/home/darwin/Documents/school/cpsc334/module3/task1/bingus.wav", "WAVE");
+}, '/stop_record');
+
 )
+
+
+
+
+
+
+
+
+
+
 
 (
 var yeahBuffer, yeahSynth, yeahOsc;
@@ -32,7 +61,7 @@ yeahBuffer = Buffer.read(s, thisProcess.nowExecutingPath.dirname +/+ "samples/ye
 
 SynthDef(\yeah, {| out = 0|
     Out.ar(out,
-		PlayBuf.ar(2, yeahBuffer, 1))
+		PlayBuf.ar(2, ~recordBuffer, 1))
 }).add();
 
 yeahSynth = Synth(\yeah);
@@ -48,18 +77,18 @@ SynthDef(\vista, {| out = 0, gate = 1, srate = 1, amp = 1, filterfreq = 500 |
     var env;
 
     env = EnvGen.kr(
-        Env([0, 1, 0], [1, 1], \sin, 1),
-        gate,
-        levelScale: amp, doneAction: 0);
-	Out.ar(out,
-		BPF.ar(GrainBuf.ar(1, Impulse.kr(10), rate: srate, dur: 1, pos: 0.4, sndbuf: vistaBuffer, pos: LFNoise2.kr(0.1).range(0, 0.5)
-		) * env, 500
+        Env.adsr(sustainLevel: 2, releaseTime: 1.5),
+        gate, levelScale: amp, doneAction: Done.freeSelf);
 
-		)
+	Out.ar(out,
+		BPF.ar(GrainBuf.ar(1, Impulse.kr(3.5), rate: srate, dur: 1, pos: 0.4, sndbuf: vistaBuffer, pos: 0.5
+		), 500
+
+		) * env
 	)
 }).add();
 
-vistaSynth = Synth(\vista);
+~vistaSynth = Synth(\vista);
 
 vistaOsc = OSCFunc({ |msg, time, addr, recvPort|
 	// srate, filter
@@ -69,7 +98,18 @@ vistaOsc = OSCFunc({ |msg, time, addr, recvPort|
 	msg.postln;
 }, '/amen_synth');
 
-vistaSynth.nodeID.postln;
+p = Pbind(
+    \instrument, \vista,
+	\srate, Pseq([1.0, 1.0, 1.5, 0.9]),
+	// \sustain, Pseq([2.0, 2.0, 0.25, 2.0]),
+	\dur, Pseq([1.0, 0.5, 0.20, 1.0]),
+	\amp, 5
+).play;
+
+
 )
+
+~vistaSynth.set(\srate, 1.21)
+
 
 
