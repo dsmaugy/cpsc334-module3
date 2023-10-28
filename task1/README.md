@@ -14,6 +14,8 @@ This project is inspired by the [Jungle](https://en.wikipedia.org/wiki/Jungle_mu
 
 `start_jungle.sh` - Bootup script to run all required programs.
 
+`jungle_controller/jungle_controller.ino` - ESP32 code.
+
 ## Requirements:
 - SuperCollider
 - Python
