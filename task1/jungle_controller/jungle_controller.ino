@@ -3,25 +3,26 @@
 #include <ArduinoOSCWiFi.h>
 
 // networking constants
-#define WIFI_SSID "The Penthouse"
-#define WIFI_PASSWORD "bingusbongus!"  // TODO: remove me when push to gitlab
-#define CONTROLLER_IP "192.168.0.233"
+#define WIFI_SSID "yale wireless"
+#define WIFI_PASSWORD ""  // TODO: remove me when push to gitlab
+// #define CONTROLLER_IP "192.168.0.233"
+#define CONTROLLER_IP "172.29.129.145" // yale wireless
 #define SC_PORT 57120 // default supercollider port
 #define PYTHON_PORT 6100
 #define LISTEN_PORT 6101
 
 // hardware pins
-#define PIEZO 1
-#define D_TILT_FORWARD 1
-#define D_TILT_RIGHT 1
-#define STATUS_LED 1
+#define PIEZO 35
+#define D_TILT_FORWARD 32
+#define D_TILT_RIGHT 33
+#define STATUS_LED 25
 
 // machine states
 #define STATUS_IDLE 0
 #define STATUS_RECORDING 1
 
 // timings
-#define LED_BLINK_THRESH 100
+#define LED_BLINK_THRESH 300
 #define RECORDING_LENGTH 1000*10
 
 // sound thresholds
@@ -32,6 +33,7 @@
 #define FILTER_DELTA 5
 #define RATE_DELTA_UP 0.05
 #define RATE_DELTA_DOWN 0.001 
+#define RATE_THRESH 300
 
 WiFiUDP udp;
 int currentStatus;
@@ -39,15 +41,22 @@ unsigned long lastBlinkTime;
 unsigned long recordingStart;
 int currentFilterFreq;
 float currentRate;
+bool ledState = true;
 
 void setup() {
   Serial.begin(9600);
+
+  pinMode(D_TILT_FORWARD, INPUT_PULLUP);
+  pinMode(D_TILT_RIGHT, INPUT_PULLUP);
+  pinMode(PIEZO, INPUT);
+  pinMode(STATUS_LED, OUTPUT);
+
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
+Serial.print(".");
     delay(1000);
   }
   Serial.println();
@@ -64,8 +73,12 @@ void setup() {
 }
 
 void loop() {
+
+  // Serial.println("D_TILT_F " + String(digitalRead(D_TILT_FORWARD)));
+  // Serial.println("D_TILT_R " + String(digitalRead(D_TILT_RIGHT)));
+
   if (currentStatus == STATUS_IDLE) {
-    // digitalWrite(STATUS_LED, HIGH);
+    digitalWrite(STATUS_LED, HIGH);
 
     int packetSize = udp.parsePacket();
     if (packetSize) {
@@ -80,7 +93,8 @@ void loop() {
     }
   } else if (currentStatus == STATUS_RECORDING) {
     if (millis() - lastBlinkTime >= LED_BLINK_THRESH) {
-      // digitalWrite(STATUS_LED, !digitalRead(STATUS_LED));
+      ledState = !ledState;
+      digitalWrite(STATUS_LED, ledState);
       lastBlinkTime = millis();
     }
     
@@ -99,8 +113,32 @@ void send_to_sc() {
 
     Serial.println("Sending record done");
   } else {
+
+    if (digitalRead(D_TILT_FORWARD) && !digitalRead(D_TILT_RIGHT)) {
+      // box being pointed downwards to the right
+      if (currentFilterFreq < MAX_FILTER) {
+        currentFilterFreq += FILTER_DELTA;
+      }
+    } else if (!digitalRead(D_TILT_FORWARD) && digitalRead(D_TILT_RIGHT)) {
+      // box "not tilted"
+      if (currentFilterFreq > MIN_FILTER) {
+        currentFilterFreq -= FILTER_DELTA;
+      }
+    }
+
+    if (analogRead(PIEZO) > RATE_THRESH) {
+      if (currentRate < MAX_RATE) {
+        currentRate += RATE_DELTA_UP;
+      }
+    } else {
+      if (currentRate > MIN_RATE) {
+        currentRate -= RATE_DELTA_DOWN;
+      }
+    }
+
+    Serial.println("PIEZO " + String(analogRead(PIEZO)));
     // send sensor data to supercollider
-    OscWiFi.send(CONTROLLER_IP, SC_PORT, "/amen_synth", 0.8, random(MIN_FILTER, MAX_FILTER));
+    OscWiFi.send(CONTROLLER_IP, SC_PORT, "/amen_synth", currentRate, currentFilterFreq);
     OscWiFi.update();
   }
 }

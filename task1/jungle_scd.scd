@@ -26,6 +26,7 @@ s.waitForBoot({
 
 	OSCFunc({ |msg, time, addr, recvPort|
 		// srate, filter
+		msg.postln;
 		~amenSynth.set(\srate, msg[1], \filterfreq, msg[2]);
 	}, '/amen_synth');
 
