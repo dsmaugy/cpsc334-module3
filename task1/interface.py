@@ -28,8 +28,7 @@ clock = pygame.time.Clock()
 running = True
 
 # Wireless initialization
-# ESP32_ADDR = ("192.168.0.137", 6101)
-ESP32_ADDR = ("192.168.0.228", 6101)
+ESP32_ADDR = ("192.168.0.137", 6101)
 HOST_ADDR = ("0.0.0.0", 6100)
 udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 udp_socket.bind(HOST_ADDR)
